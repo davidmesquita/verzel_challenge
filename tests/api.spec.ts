@@ -37,6 +37,18 @@ test('GET produto retorna 404 para identificador inexistente', async ({ request 
   expect((await response.json()).erro.codigo).toBe('PRODUTO_NAO_ENCONTRADO');
 });
 
+test('GET produto retorna o produto para identificador existente', async ({ request }) => {
+  const response = await request.get('/api/produtos/P001');
+  expect(response.status()).toBe(200);
+  expect(await response.json()).toEqual({
+    id: 'P001',
+    nome: 'Camiseta Essencial',
+    descricao: 'Algodão penteado e corte reto.',
+    categoria: 'Vestuário',
+    preco: 59.9,
+  });
+});
+
 test('POST calcular corresponde ao exemplo oficial da documentação', async ({ request }) => {
   const response = await request.post('/api/carrinho/calcular', {
     data: {
@@ -331,6 +343,44 @@ for (const [coupon, code] of [
   test(`POST pedido rejeita cupom ${coupon}`, async ({ request }) => {
     const response = await request.post('/api/pedidos', {
       data: validOrder({ cupom: coupon }),
+    });
+    expect(response.status()).toBe(422);
+    expect((await response.json()).erro.codigo).toBe(code);
+  });
+}
+
+test('API rejeita JSON inválido com HTTP 400', async ({ request }) => {
+  const response = await request.post('/api/pedidos', {
+    data: '{',
+    headers: { 'Content-Type': 'application/json' },
+  });
+  expect(response.status()).toBe(400);
+  expect((await response.json()).erro.codigo).toBe('JSON_INVALIDO');
+});
+
+test('API retorna 404 para rota inexistente', async ({ request }) => {
+  const response = await request.get('/api/rota-inexistente');
+  expect(response.status()).toBe(404);
+  expect((await response.json()).erro.codigo).toBe('ROTA_NAO_ENCONTRADA');
+});
+
+test('API retorna 405 para método não permitido', async ({ request }) => {
+  const response = await request.get('/api/pedidos');
+  expect(response.status()).toBe(405);
+  expect((await response.json()).erro.codigo).toBe('METODO_NAO_PERMITIDO');
+});
+
+const malformedOrders: { title: string; order: Record<string, unknown>; code: string }[] = [
+  { title: 'lista de itens ausente', order: { cliente: validClient }, code: 'ITENS_OBRIGATORIOS' },
+  { title: 'item sem produtoId', order: { cliente: validClient, itens: [{ quantidade: 1 }] }, code: 'ITEM_INVALIDO' },
+  { title: 'item sem quantidade', order: { cliente: validClient, itens: [{ produtoId: 'P005' }] }, code: 'ITEM_INVALIDO' },
+  { title: 'item que não é um objeto', order: { cliente: validClient, itens: [null] }, code: 'ITEM_INVALIDO' },
+];
+
+for (const { title, order, code } of malformedOrders) {
+  test(`POST pedido rejeita ${title}`, async ({ request }) => {
+    const response = await request.post('/api/pedidos', {
+      data: order,
     });
     expect(response.status()).toBe(422);
     expect((await response.json()).erro.codigo).toBe(code);

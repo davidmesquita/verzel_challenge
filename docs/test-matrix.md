@@ -13,18 +13,20 @@
 | TC-009 | REQ-013 | Checkout | Negativo | Alta | E-mail inválido | PASS |
 | TC-010 | REQ-014 | Checkout | Negativo | Alta | CEP inválido | PASS |
 | TC-011 | REQ-015 | Checkout | Funcional | Média | Pedido confirmado com os dados válidos | PASS |
-| TC-012 | REQ-016 | Ambiente | Exploratório | Média | Carrinho não persiste entre abas | Pendente |
+| TC-012 | REQ-016 | Ambiente | Exploratório | Média | Carrinho não persiste entre abas | PASS |
 | TC-013 | REQ-011 | Cálculo | Boundary | Média | Arredondamento para 2 casas decimais | PASS |
-| TC-014 | REQ-010 | Carrinho | Exploratório | Média | Carrinho vazio e preenchido | Pendente |
+| TC-014 | REQ-010 | Carrinho | Exploratório | Média | Carrinho vazio e preenchido | PASS |
 | TC-015 | REQ-006 | Frete | Boundary | Alta | Frete grátis acima do limite, com subtotal R$ 209,90 | PASS |
 | TC-016 | REQ-008 | Frete/Cupom | Boundary | Alta | Subtotal de R$ 200,00 mantém frete grátis após cupom | Falha (BUG-001) |
-| TC-017 | API | Catálogo | Funcional/Negativo | Média | Listar produto e consultar ID inexistente | PASS |
+| TC-017 | API | Catálogo | Funcional/Negativo | Média | Listar produtos e consultar IDs existente/inexistente | PASS |
 | TC-018 | API | Pedido | Negativo | Alta | Validar itens vazios, duplicados e produto inexistente | PASS |
 | TC-019 | API | Checkout | Negativo | Alta | Validar nome, e-mail e CEP inválidos | PASS |
 | TC-020 | API | Erros HTTP | Negativo | Média | JSON inválido e método não permitido | PASS |
 | TC-021 | REQ-013 | API | Negativo | Alta | Rejeitar e-mail com pontos consecutivos no usuário ou domínio | Falha (BUG-003) |
 | TC-022 | API | Contrato | Funcional | Alta | Valores de catálogo e exemplo oficial de cálculo | PASS |
 | TC-023 | API | Pedido | Funcional | Alta | Exemplo oficial de criação de pedido e normalização do CEP | PASS |
+| TC-024 | API | Pedido | Negativo | Média | Item sem `produtoId` ou `quantidade` retorna `ITEM_INVALIDO` | Falha (BUG-004) |
+| TC-025 | REQ-005 | Cupom | Funcional | Média | Remover cupom aplicado antes de trocar por outro | PASS |
 
 ## Cobertura mínima desejada
 - Happy path: fluxo correto com dados válidos
