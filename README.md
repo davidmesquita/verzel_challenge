@@ -39,6 +39,10 @@ npx playwright test
 npx playwright show-report
 ```
 
+### Integração contínua
+
+O GitHub Actions executa os testes Playwright em pushes e pull requests. O workflow instala o Chromium e publica o relatório HTML e os resultados como artefato, inclusive quando algum teste falha. As regressões que reproduzem BUG-001, BUG-002 e BUG-003 mantêm a execução com falha até que os defeitos sejam corrigidos.
+
 ## Estrutura do repositório
 
 - [docs/requisitos.md](docs/requisitos.md) — requisitos, regras e validações.
