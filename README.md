@@ -48,6 +48,8 @@ O GitHub Actions executa os testes Playwright em pushes e pull requests. O workf
 - [docs/requisitos.md](docs/requisitos.md) — requisitos, regras e validações.
 - [docs/contexto-projeto.md](docs/contexto-projeto.md) — contexto consolidado para continuidade do projeto.
 - [docs/api.md](docs/api.md) — endpoints e regras da API.
+- [evidence/api/sucesso.json](evidence/api/sucesso.json) — corpos de requisição e asserções dos retornos corretos da API.
+- [evidence/api/erros.json](evidence/api/erros.json) — corpos de requisição, erros esperados e divergências observadas, com referência aos bugs.
 - [docs/test-matrix.md](docs/test-matrix.md) — matriz de teste.
 - [docs/testes-detalhados.md](docs/testes-detalhados.md) — testes detalhados com resultados completos.
 - [results/full-regression.md](results/full-regression.md) — execução manual e exploratória da UI e API, com resultado por cenário.

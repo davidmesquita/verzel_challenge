@@ -1,0 +1,407 @@
+{
+  "fonte": "tests/api.spec.ts e regressao executada em 2026-10-06",
+  "observacao": "assertions registra apenas os campos verificados. Em divergencias, esperado descreve o contrato e observado registra o retorno reproduzido.",
+  "casos": [
+    {
+      "cenario": "Consultar produto inexistente",
+      "requisicao": { "metodo": "GET", "url": "/api/produtos/NOPE" },
+      "esperado": { "status": 404, "assertions": { "$.erro.codigo": "PRODUTO_NAO_ENCONTRADO" } },
+      "observado": { "status": 404, "assertions": { "$.erro.codigo": "PRODUTO_NAO_ENCONTRADO" } },
+      "resultado": "correto"
+    },
+    {
+      "cenario": "Rejeitar lista de itens vazia",
+      "requisicao": {
+        "metodo": "POST",
+        "url": "/api/pedidos",
+        "body": {
+          "cliente": {
+            "nome": "Maria Silva",
+            "email": "maria@exemplo.com",
+            "cep": "01310-100"
+          },
+          "itens": []
+        }
+      },
+      "esperado": { "status": 422, "assertions": { "$.erro.codigo": "ITENS_OBRIGATORIOS" } },
+      "observado": { "status": 422, "assertions": { "$.erro.codigo": "ITENS_OBRIGATORIOS" } },
+      "resultado": "correto"
+    },
+    {
+      "cenario": "Rejeitar lista de itens ausente ou item que não é objeto",
+      "requisicao": {
+        "metodo": "POST",
+        "url": "/api/pedidos",
+        "bodyBase": {
+          "cliente": {
+            "nome": "Maria Silva",
+            "email": "maria@exemplo.com",
+            "cep": "01310-100"
+          }
+        },
+        "variantes": [
+          { "itens": "ausente", "codigoEsperado": "ITENS_OBRIGATORIOS" },
+          { "itens": [null], "codigoEsperado": "ITEM_INVALIDO" }
+        ]
+      },
+      "esperado": { "status": 422, "assertions": { "$.erro.codigo": "ITENS_OBRIGATORIOS ou ITEM_INVALIDO" } },
+      "observado": { "status": 422, "assertions": { "$.erro.codigo": "ITENS_OBRIGATORIOS ou ITEM_INVALIDO" } },
+      "resultado": "correto"
+    },
+    {
+      "cenario": "Rejeitar quantidade zero, negativa ou fracionária",
+      "requisicao": {
+        "metodo": "POST",
+        "url": "/api/pedidos",
+        "bodyBase": {
+          "cliente": {
+            "nome": "Maria Silva",
+            "email": "maria@exemplo.com",
+            "cep": "01310-100"
+          },
+          "itens": [{ "produtoId": "P005", "quantidade": 1 }]
+        },
+        "variantes": [
+          { "itens[0].quantidade": 0 },
+          { "itens[0].quantidade": -1 },
+          { "itens[0].quantidade": 1.5 }
+        ]
+      },
+      "esperado": { "status": 422, "assertions": { "$.erro.codigo": "QUANTIDADE_INVALIDA" } },
+      "observado": { "status": 422, "assertions": { "$.erro.codigo": "QUANTIDADE_INVALIDA" } },
+      "resultado": "correto"
+    },
+    {
+      "cenario": "Rejeitar nome inválido, e-mail simples inválido ou CEP malformado",
+      "requisicao": {
+        "metodo": "POST",
+        "url": "/api/pedidos",
+        "bodyBase": {
+          "cliente": {
+            "nome": "Maria Silva",
+            "email": "maria@exemplo.com",
+            "cep": "01310-100"
+          },
+          "itens": [{ "produtoId": "P005", "quantidade": 1 }]
+        },
+        "variantes": [
+          { "cliente.nome": "Maria" },
+          { "cliente.nome": "" },
+          { "cliente.email": "maria@" },
+          { "cliente.email": "" },
+          { "cliente.cep": "ABC" },
+          { "cliente.cep": "1234567" },
+          { "cliente.cep": "1234-5678" }
+        ]
+      },
+      "esperado": {
+        "status": 422,
+        "assertions": {
+          "$.erro.codigo": "DADOS_INVALIDOS",
+          "$.erro.campos": "inclui o campo inválido correspondente"
+        }
+      },
+      "observado": {
+        "status": 422,
+        "assertions": {
+          "$.erro.codigo": "DADOS_INVALIDOS",
+          "$.erro.campos": "inclui o campo inválido correspondente"
+        }
+      },
+      "resultado": "correto"
+    },
+    {
+      "cenario": "Rejeitar produto inexistente em pedido",
+      "requisicao": {
+        "metodo": "POST",
+        "url": "/api/pedidos",
+        "body": {
+          "cliente": {
+            "nome": "Maria Silva",
+            "email": "maria@exemplo.com",
+            "cep": "01310-100"
+          },
+          "itens": [{ "produtoId": "NOPE", "quantidade": 1 }]
+        }
+      },
+      "esperado": { "status": 422, "assertions": { "$.erro.codigo": "PRODUTO_NAO_ENCONTRADO" } },
+      "observado": { "status": 422, "assertions": { "$.erro.codigo": "PRODUTO_NAO_ENCONTRADO" } },
+      "resultado": "correto"
+    },
+    {
+      "cenario": "Rejeitar produto duplicado em pedido",
+      "requisicao": {
+        "metodo": "POST",
+        "url": "/api/pedidos",
+        "body": {
+          "cliente": {
+            "nome": "Maria Silva",
+            "email": "maria@exemplo.com",
+            "cep": "01310-100"
+          },
+          "itens": [
+            { "produtoId": "P001", "quantidade": 1 },
+            { "produtoId": "P001", "quantidade": 1 }
+          ]
+        }
+      },
+      "esperado": { "status": 422, "assertions": { "$.erro.codigo": "ITEM_DUPLICADO" } },
+      "observado": { "status": 422, "assertions": { "$.erro.codigo": "ITEM_DUPLICADO" } },
+      "resultado": "correto"
+    },
+    {
+      "cenario": "Rejeitar cupom inválido ou expirado em pedido",
+      "requisicao": {
+        "metodo": "POST",
+        "url": "/api/pedidos",
+        "bodyBase": {
+          "cliente": {
+            "nome": "Maria Silva",
+            "email": "maria@exemplo.com",
+            "cep": "01310-100"
+          },
+          "itens": [{ "produtoId": "P005", "quantidade": 1 }]
+        },
+        "variantes": [
+          { "cupom": "INEXISTENTE", "codigoEsperado": "CUPOM_INVALIDO" },
+          { "cupom": "VERAO2026", "codigoEsperado": "CUPOM_EXPIRADO" }
+        ]
+      },
+      "esperado": { "status": 422, "assertions": { "$.erro.codigo": "CUPOM_INVALIDO ou CUPOM_EXPIRADO" } },
+      "observado": { "status": 422, "assertions": { "$.erro.codigo": "CUPOM_INVALIDO ou CUPOM_EXPIRADO" } },
+      "resultado": "correto"
+    },
+    {
+      "cenario": "Rejeitar JSON malformado",
+      "requisicao": {
+        "metodo": "POST",
+        "url": "/api/pedidos",
+        "headers": { "Content-Type": "application/json" },
+        "bodyRaw": "{"
+      },
+      "esperado": { "status": 400, "assertions": { "$.erro.codigo": "JSON_INVALIDO" } },
+      "observado": { "status": 400, "assertions": { "$.erro.codigo": "JSON_INVALIDO" } },
+      "resultado": "correto"
+    },
+    {
+      "cenario": "Rejeitar rota inexistente",
+      "requisicao": { "metodo": "GET", "url": "/api/rota-inexistente" },
+      "esperado": { "status": 404, "assertions": { "$.erro.codigo": "ROTA_NAO_ENCONTRADA" } },
+      "observado": { "status": 404, "assertions": { "$.erro.codigo": "ROTA_NAO_ENCONTRADA" } },
+      "resultado": "correto"
+    },
+    {
+      "cenario": "Rejeitar método não permitido",
+      "requisicao": { "metodo": "GET", "url": "/api/pedidos" },
+      "esperado": { "status": 405, "assertions": { "$.erro.codigo": "METODO_NAO_PERMITIDO" } },
+      "observado": { "status": 405, "assertions": { "$.erro.codigo": "METODO_NAO_PERMITIDO" } },
+      "resultado": "correto"
+    },
+    {
+      "cenario": "Frete no limite exato de R$ 200,00",
+      "requisicao": {
+        "metodo": "POST",
+        "url": "/api/carrinho/calcular",
+        "body": { "itens": [{ "produtoId": "P008", "quantidade": 4 }] }
+      },
+      "esperado": {
+        "status": 200,
+        "assertions": {
+          "$.subtotal": 200,
+          "$.frete": 0,
+          "$.freteGratis": true,
+          "$.total": 200
+        }
+      },
+      "observado": {
+        "status": 200,
+        "assertions": {
+          "$.subtotal": 200,
+          "$.frete": 19.9,
+          "$.freteGratis": false,
+          "$.total": 219.9
+        }
+      },
+      "resultado": "bug",
+      "bug": "BUG-001"
+    },
+    {
+      "cenario": "Frete grátis no limite de R$ 200,00 com cupom",
+      "requisicao": {
+        "metodo": "POST",
+        "url": "/api/carrinho/calcular",
+        "body": {
+          "itens": [{ "produtoId": "P005", "quantidade": 2 }],
+          "cupom": "BEMVINDO10"
+        }
+      },
+      "esperado": {
+        "status": 200,
+        "assertions": {
+          "$.subtotal": 200,
+          "$.desconto": 20,
+          "$.frete": 0,
+          "$.total": 180
+        }
+      },
+      "observado": {
+        "status": 200,
+        "assertions": {
+          "$.subtotal": 200,
+          "$.desconto": 20,
+          "$.frete": 19.9,
+          "$.total": 199.9
+        }
+      },
+      "resultado": "bug",
+      "bug": "BUG-001"
+    },
+    {
+      "cenario": "Criar pedido no limite de R$ 200,00",
+      "requisicao": {
+        "metodo": "POST",
+        "url": "/api/pedidos",
+        "body": {
+          "cliente": {
+            "nome": "Maria Silva",
+            "email": "maria@exemplo.com",
+            "cep": "01310-100"
+          },
+          "itens": [{ "produtoId": "P008", "quantidade": 4 }]
+        }
+      },
+      "esperado": {
+        "status": 201,
+        "assertions": { "$.subtotal": 200, "$.frete": 0, "$.total": 200 }
+      },
+      "observado": {
+        "status": 201,
+        "assertions": { "$.subtotal": 200, "$.frete": 19.9, "$.total": 219.9 }
+      },
+      "resultado": "bug",
+      "bug": "BUG-001"
+    },
+    {
+      "cenario": "Quantidade seis no cálculo",
+      "requisicao": {
+        "metodo": "POST",
+        "url": "/api/carrinho/calcular",
+        "body": { "itens": [{ "produtoId": "P005", "quantidade": 6 }] }
+      },
+      "esperado": { "status": 422, "assertions": { "$.erro.codigo": "QUANTIDADE_MAXIMA_EXCEDIDA" } },
+      "observado": {
+        "status": 200,
+        "assertions": { "$.subtotal": 600, "$.frete": 0, "$.total": 600 }
+      },
+      "resultado": "bug",
+      "bug": "BUG-002"
+    },
+    {
+      "cenario": "Quantidade seis em pedido",
+      "requisicao": {
+        "metodo": "POST",
+        "url": "/api/pedidos",
+        "body": {
+          "cliente": {
+            "nome": "Maria Silva",
+            "email": "maria@exemplo.com",
+            "cep": "01310-100"
+          },
+          "itens": [{ "produtoId": "P005", "quantidade": 6 }]
+        }
+      },
+      "esperado": { "status": 422, "assertions": { "$.erro.codigo": "QUANTIDADE_MAXIMA_EXCEDIDA" } },
+      "observado": { "status": 201, "assertions": { "$.itens[0].quantidade": 6 } },
+      "resultado": "bug",
+      "bug": "BUG-002"
+    },
+    {
+      "cenario": "E-mail com pontos consecutivos no domínio",
+      "requisicao": {
+        "metodo": "POST",
+        "url": "/api/pedidos",
+        "body": {
+          "cliente": {
+            "nome": "Maria Silva",
+            "email": "ana@dominio..com",
+            "cep": "01310-100"
+          },
+          "itens": [{ "produtoId": "P005", "quantidade": 1 }]
+        }
+      },
+      "esperado": {
+        "status": 422,
+        "assertions": {
+          "$.erro.codigo": "DADOS_INVALIDOS",
+          "$.erro.campos": "inclui cliente.email"
+        }
+      },
+      "observado": { "status": 201, "assertions": { "$.cliente.email": "ana@dominio..com" } },
+      "resultado": "bug",
+      "bug": "BUG-003"
+    },
+    {
+      "cenario": "E-mail com pontos consecutivos no usuário",
+      "requisicao": {
+        "metodo": "POST",
+        "url": "/api/pedidos",
+        "body": {
+          "cliente": {
+            "nome": "Maria Silva",
+            "email": "ana..silva@dominio.com",
+            "cep": "01310-100"
+          },
+          "itens": [{ "produtoId": "P005", "quantidade": 1 }]
+        }
+      },
+      "esperado": {
+        "status": 422,
+        "assertions": {
+          "$.erro.codigo": "DADOS_INVALIDOS",
+          "$.erro.campos": "inclui cliente.email"
+        }
+      },
+      "observado": { "status": 201, "assertions": { "$.cliente.email": "ana..silva@dominio.com" } },
+      "resultado": "bug",
+      "bug": "BUG-003"
+    },
+    {
+      "cenario": "Item sem produtoId",
+      "requisicao": {
+        "metodo": "POST",
+        "url": "/api/pedidos",
+        "body": {
+          "cliente": {
+            "nome": "Maria Silva",
+            "email": "maria@exemplo.com",
+            "cep": "01310-100"
+          },
+          "itens": [{ "quantidade": 1 }]
+        }
+      },
+      "esperado": { "status": 422, "assertions": { "$.erro.codigo": "ITEM_INVALIDO" } },
+      "observado": { "status": 422, "assertions": { "$.erro.codigo": "PRODUTO_NAO_ENCONTRADO" } },
+      "resultado": "bug",
+      "bug": "BUG-004"
+    },
+    {
+      "cenario": "Item sem quantidade",
+      "requisicao": {
+        "metodo": "POST",
+        "url": "/api/pedidos",
+        "body": {
+          "cliente": {
+            "nome": "Maria Silva",
+            "email": "maria@exemplo.com",
+            "cep": "01310-100"
+          },
+          "itens": [{ "produtoId": "P005" }]
+        }
+      },
+      "esperado": { "status": 422, "assertions": { "$.erro.codigo": "ITEM_INVALIDO" } },
+      "observado": { "status": 422, "assertions": { "$.erro.codigo": "QUANTIDADE_INVALIDA" } },
+      "resultado": "bug",
+      "bug": "BUG-004"
+    }
+  ]
+}

@@ -1,0 +1,268 @@
+{
+  "fonte": "tests/api.spec.ts e regressao executada em 2026-10-06",
+  "observacao": "retorno.assertions registra os campos validados no retorno observado; nao representa necessariamente o corpo integral da resposta.",
+  "casos": [
+    {
+      "id": "API-001",
+      "cenario": "Listar os oito produtos",
+      "requisicao": { "metodo": "GET", "url": "/api/produtos" },
+      "retorno": {
+        "status": 200,
+        "assertions": {
+          "$.length": 8,
+          "$[0].id": "P001",
+          "$[7].id": "P008",
+          "$[0].preco": 59.9,
+          "$[7].preco": 50
+        }
+      }
+    },
+    {
+      "id": "API-002",
+      "cenario": "Consultar produto existente",
+      "requisicao": { "metodo": "GET", "url": "/api/produtos/P001" },
+      "retorno": {
+        "status": 200,
+        "assertions": {
+          "$.id": "P001",
+          "$.nome": "Camiseta Essencial",
+          "$.preco": 59.9
+        }
+      }
+    },
+    {
+      "cenario": "Calcular exemplo oficial com cupom",
+      "requisicao": {
+        "metodo": "POST",
+        "url": "/api/carrinho/calcular",
+        "body": {
+          "itens": [
+            { "produtoId": "P002", "quantidade": 1 },
+            { "produtoId": "P004", "quantidade": 2 }
+          ],
+          "cupom": "BEMVINDO10"
+        }
+      },
+      "retorno": {
+        "status": 200,
+        "assertions": {
+          "$.subtotal": 239.7,
+          "$.desconto": 23.97,
+          "$.frete": 0,
+          "$.freteGratis": true,
+          "$.total": 215.73,
+          "$.cupom.aplicado": true
+        }
+      }
+    },
+    {
+      "cenario": "Calcular subtotal de R$ 199,90",
+      "requisicao": {
+        "metodo": "POST",
+        "url": "/api/carrinho/calcular",
+        "body": {
+          "itens": [
+            { "produtoId": "P008", "quantidade": 3 },
+            { "produtoId": "P004", "quantidade": 1 }
+          ]
+        }
+      },
+      "retorno": {
+        "status": 200,
+        "assertions": {
+          "$.subtotal": 199.9,
+          "$.frete": 19.9,
+          "$.freteGratis": false,
+          "$.valorFaltanteFreteGratis": 0.1
+        }
+      }
+    },
+    {
+      "cenario": "Calcular subtotal de R$ 209,90",
+      "requisicao": {
+        "metodo": "POST",
+        "url": "/api/carrinho/calcular",
+        "body": {
+          "itens": [
+            { "produtoId": "P008", "quantidade": 3 },
+            { "produtoId": "P001", "quantidade": 1 }
+          ]
+        }
+      },
+      "retorno": {
+        "status": 200,
+        "assertions": {
+          "$.subtotal": 209.9,
+          "$.frete": 0,
+          "$.freteGratis": true,
+          "$.total": 209.9
+        }
+      }
+    },
+    {
+      "cenario": "Normalizar e aplicar cupom com espaços e letras minúsculas",
+      "requisicao": {
+        "metodo": "POST",
+        "url": "/api/carrinho/calcular",
+        "body": {
+          "itens": [{ "produtoId": "P005", "quantidade": 2 }],
+          "cupom": "  bemvindo10  "
+        }
+      },
+      "retorno": {
+        "status": 200,
+        "assertions": {
+          "$.subtotal": 200,
+          "$.desconto": 20,
+          "$.cupom.aplicado": true
+        }
+      }
+    },
+    {
+      "cenario": "Cupom inexistente no cálculo não gera erro HTTP",
+      "requisicao": {
+        "metodo": "POST",
+        "url": "/api/carrinho/calcular",
+        "body": {
+          "itens": [{ "produtoId": "P005", "quantidade": 1 }],
+          "cupom": "INEXISTENTE"
+        }
+      },
+      "retorno": {
+        "status": 200,
+        "assertions": {
+          "$.desconto": 0,
+          "$.cupom.aplicado": false,
+          "$.cupom.mensagem": "Cupom inválido."
+        }
+      }
+    },
+    {
+      "cenario": "Cupom expirado no cálculo não gera erro HTTP",
+      "requisicao": {
+        "metodo": "POST",
+        "url": "/api/carrinho/calcular",
+        "body": {
+          "itens": [{ "produtoId": "P005", "quantidade": 1 }],
+          "cupom": "VERAO2026"
+        }
+      },
+      "retorno": {
+        "status": 200,
+        "assertions": {
+          "$.desconto": 0,
+          "$.cupom.aplicado": false,
+          "$.cupom.mensagem": "Cupom expirado."
+        }
+      }
+    },
+    {
+      "cenario": "Arredondar desconto e total para duas casas",
+      "requisicao": {
+        "metodo": "POST",
+        "url": "/api/carrinho/calcular",
+        "body": {
+          "itens": [{ "produtoId": "P001", "quantidade": 3 }],
+          "cupom": "BEMVINDO10"
+        }
+      },
+      "retorno": {
+        "status": 200,
+        "assertions": {
+          "$.subtotal": 179.7,
+          "$.desconto": 17.97,
+          "$.frete": 19.9,
+          "$.total": 181.63
+        }
+      }
+    },
+    {
+      "id": "API-030",
+      "cenario": "Criar pedido válido com cupom",
+      "requisicao": {
+        "metodo": "POST",
+        "url": "/api/pedidos",
+        "body": {
+          "cliente": {
+            "nome": "Maria Silva",
+            "email": "maria@exemplo.com",
+            "cep": "01310-100"
+          },
+          "itens": [{ "produtoId": "P005", "quantidade": 1 }],
+          "cupom": "BEMVINDO10"
+        }
+      },
+      "retorno": {
+        "status": 201,
+        "assertions": {
+          "$.numero": "VZ-###### (formato)",
+          "$.cliente.cep": "01310100",
+          "$.subtotal": 100,
+          "$.desconto": 10,
+          "$.frete": 19.9,
+          "$.total": 109.9
+        }
+      }
+    },
+    {
+      "cenario": "Aceitar quantidade máxima de cinco unidades",
+      "requisicao": {
+        "metodo": "POST",
+        "url": "/api/pedidos",
+        "body": {
+          "cliente": {
+            "nome": "Maria Silva",
+            "email": "maria@exemplo.com",
+            "cep": "01310-100"
+          },
+          "itens": [{ "produtoId": "P005", "quantidade": 5 }]
+        }
+      },
+      "retorno": {
+        "status": 201,
+        "assertions": { "$.itens[0].quantidade": 5 }
+      }
+    },
+    {
+      "cenario": "Aceitar CEP com e sem hífen e normalizar",
+      "requisicao": {
+        "metodo": "POST",
+        "url": "/api/pedidos",
+        "variantes": [
+          { "cliente.cep": "01310-100" },
+          { "cliente.cep": "01310100" }
+        ],
+        "bodyBase": {
+          "cliente": {
+            "nome": "Maria Silva",
+            "email": "maria@exemplo.com"
+          },
+          "itens": [{ "produtoId": "P005", "quantidade": 1 }]
+        }
+      },
+      "retorno": {
+        "status": 201,
+        "assertions": { "$.cliente.cep": "01310100" }
+      }
+    },
+    {
+      "cenario": "Normalizar espaços externos do e-mail",
+      "requisicao": {
+        "metodo": "POST",
+        "url": "/api/pedidos",
+        "body": {
+          "cliente": {
+            "nome": "Maria Silva",
+            "email": " maria@exemplo.com ",
+            "cep": "01310-100"
+          },
+          "itens": [{ "produtoId": "P005", "quantidade": 1 }]
+        }
+      },
+      "retorno": {
+        "status": 201,
+        "assertions": { "$.cliente.email": "maria@exemplo.com" }
+      }
+    }
+  ]
+}
